@@ -48,7 +48,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "https://raw.githubusercontent.com/farrukh-kaispe/oct-15-deployment-phase-2/master/guid.json",
+                    "uri": "https://raw.githubusercontent.com/farrukh-kaispe/oct-16-dep-rev/master/guid.json",
                     "contentVersion": "1.0.0.0"
                 }
             }
