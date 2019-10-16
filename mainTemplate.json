@@ -41,15 +41,18 @@
         "tempguid": "[concat(substring(variables('z'), 0, 8), '-', substring(variables('z'), 9, 4), '-', substring(variables('z'), 14, 4), '-', substring(variables('z'), 19, 4), '-', substring(variables('z'), 24, 12))]"
     },
     "resources": [
-        {
-            "type": "Microsoft.Resources/deployments",
+       {   
             "apiVersion": "2019-05-01",
-            "name": "[variables('tempguid')]",
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "https://raw.githubusercontent.com/farrukh-kaispe/oct-16-dep-rev/master/guid.json",
-                    "contentVersion": "1.0.0.0"
+            "name": "pid-8e29efca-8d11-5ccd-bebc-c9c26ba902ac", 
+            "type": "Microsoft.Resources/deployments" ,
+            "properties":{
+                "mode":"Incremental",
+                "template": {
+                "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                "contentVersion": "1.0.0.0",
+                 "resources": [
+                     
+                 ]
                 }
             }
         },
