@@ -1,0 +1,464 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "variables": {
+        "storageAccountName": "[concat('kspstorage', uniqueString(resourceGroup().id))]",
+        "iotHubName": "[concat('IoTHub', uniqueString(resourceGroup().id))]",
+        "streamingJob": "[concat('streamingJob', uniqueString(resourceGroup().id))]",
+        "webAppName": "[concat('webApp', uniqueString(resourceGroup().id))]",
+        "appServiceName": "[concat('appService', uniqueString(resourceGroup().id))]",
+        "serviceBus": "[concat('serviceBus', uniqueString(resourceGroup().id))]",
+        "serviceBusQueue": "[concat('serviceBusQueue', uniqueString(resourceGroup().id))]",
+        "sbVersion": "2017-04-01",
+        "AuthRules_sb_queue": "AuthRules_sb_queue",
+        "serviceBusQueue_endpoint": "serviceBusQueue_endpoint",
+        "queueAuthorizationRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/queues/authorizationRules', variables('serviceBus'), variables('serviceBusQueue'), variables('AuthRules_sb_queue'))]",
+        "consumerGroupName": "streamingJobs",
+        "logicAppName": "[concat('logicApp', uniqueString(resourceGroup().id))]",
+        "uniqueBase": "[toLower(uniqueString('0', resourceGroup().id, deployment().name))]",
+        "temp": "[concat(variables('uniqueBase') , variables('uniqueBase'), substring(variables('uniqueBase'), 0, 10))]",
+        "g": "[replace(variables('temp'), 'g', '0')]",
+        "h": "[replace(variables('g'), 'h', '1')]",
+        "i": "[replace(variables('h'), 'i', '2')]",
+        "j": "[replace(variables('i'), 'j', '3')]",
+        "k": "[replace(variables('j'), 'k', '4')]",
+        "l": "[replace(variables('k'), 'l', '5')]",
+        "m": "[replace(variables('l'), 'm', '6')]",
+        "n": "[replace(variables('m'), 'n', '7')]",
+        "o": "[replace(variables('n'), 'o', '8')]",
+        "p": "[replace(variables('o'), 'p', '9')]",
+        "q": "[replace(variables('p'), 'q', 'a')]",
+        "r": "[replace(variables('q'), 'r', 'b')]",
+        "s": "[replace(variables('r'), 's', 'c')]",
+        "t": "[replace(variables('s'), 't', 'd')]",
+        "u": "[replace(variables('t'), 'u', 'e')]",
+        "v": "[replace(variables('u'), 'v', 'f')]",
+        "w": "[replace(variables('v'), 'w', '0')]",
+        "x": "[replace(variables('w'), 'x', '1')]",
+        "y": "[replace(variables('x'), 'y', '2')]",
+        "z": "[replace(variables('y'), 'z', '3')]",
+        "tempguid": "[concat(substring(variables('z'), 0, 8), '-', substring(variables('z'), 9, 4), '-', substring(variables('z'), 14, 4), '-', substring(variables('z'), 19, 4), '-', substring(variables('z'), 24, 12))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-05-01",
+            "name": "[variables('tempguid')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "https://raw.githubusercontent.com/farrukh-kaispe/oct-15-deployment-phase-2/master/guid.json",
+                    "contentVersion": "1.0.0.0"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces",
+            "apiVersion": "[variables('sbVersion')]",
+            "name": "[variables('serviceBus')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Basic",
+                "tier": "Basic"
+            }
+        },   
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[variables('logicAppName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "triggers": {},
+                    "actions": {},
+                    "outputs": {}
+                },
+                "parameters": {}
+            }
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces/queues",
+            "apiVersion": "[variables('sbVersion')]",
+            "name": "[concat(variables('serviceBus'), '/', variables('serviceBusQueue'))]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBus'))]"
+            ],
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2018-07-01",
+            "name": "[variables('storageAccountName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_RAGRS"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "accessTier": "Hot"
+            }
+        },
+        {
+            "type": "Microsoft.Devices/Iothubs/eventhubEndpoints/ConsumerGroups",
+            "apiVersion": "2018-04-01",
+            "name": "[concat(variables('iotHubName'), '/events/', variables('consumerGroupName'))]",
+            "dependsOn": [
+                "[concat('Microsoft.Devices/Iothubs/', variables('iotHubName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Devices/IotHubs",
+            "apiVersion": "2018-04-01",
+            "name": "[variables('iotHubName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBus'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/queues', variables('serviceBus'), variables('serviceBusQueue'))]"
+            ],
+            "sku": {
+                "name": "S1",
+                "tier": "Standard",
+                "capacity": 1
+            },
+            "properties": {
+                "operationsMonitoringProperties": {
+                    "events": {
+                        "None": "None",
+                        "Connections": "None",
+                        "DeviceTelemetry": "None",
+                        "C2DCommands": "None",
+                        "DeviceIdentityOperations": "None",
+                        "FileUploadOperations": "None",
+                        "Routes": "None"
+                    }
+                },
+                "ipFilterRules": [],
+                "eventHubEndpoints": {
+                    "events": {
+                        "retentionTimeInDays": 1,
+                        "partitionCount": 2,
+                        "partitionIds": [
+                            "0",
+                            "1"
+                        ],
+                        "path": "",
+                        "endpoint": ""
+                    },
+                    "operationsMonitoringEvents": {
+                        "retentionTimeInDays": 1,
+                        "partitionCount": 2,
+                        "partitionIds": [
+                            "0",
+                            "1"
+                        ],
+                        "path": "",
+                        "endpoint": ""
+                    }
+                },
+                "routing": {
+                    "endpoints": {
+                        "serviceBusQueues": [
+                            {
+                                "connectionString": "[Concat('Endpoint=sb://',variables('serviceBus'),'.servicebus.windows.net/;SharedAccessKeyName=',variables('AuthRules_sb_queue'),';SharedAccessKey=',listkeys(variables('queueAuthorizationRuleResourceId'),variables('sbVersion')).primaryKey,';EntityPath=',variables('serviceBusQueue'))]",
+                                "name": "[variables('serviceBusQueue_endpoint')]",
+                                "resourceGroup": "[resourceGroup().Name]"
+                            }
+                        ]
+                    },
+                    "routes": [
+                        {
+                            "name": "routeEnd",
+                            "source": "DeviceMessages",
+                            "condition": "true",
+                            "endpointNames": [
+                                "events"
+                            ],
+                            "isEnabled": true
+                        },
+                        {
+                            "name": "ServiceBusQueueRoute",
+                            "source": "DeviceMessages",
+                            "condition": "true",
+                            "endpointNames": [
+                                "[variables('serviceBusQueue_endpoint')]"
+                            ],
+                            "isEnabled": true
+                        }
+                    ],
+                    "fallbackRoute": {
+                        "name": "$fallback",
+                        "source": "DeviceMessages",
+                        "condition": "true",
+                        "endpointNames": [
+                            "events"
+                        ],
+                        "isEnabled": true
+                    }
+                },
+                "storageEndpoints": {
+                    "$default": {
+                        "sasTtlAsIso8601": "PT1H",
+                        "connectionString": "",
+                        "containerName": ""
+                    }
+                },
+                "messagingEndpoints": {
+                    "fileNotifications": {
+                        "lockDurationAsIso8601": "PT1M",
+                        "ttlAsIso8601": "PT1H",
+                        "maxDeliveryCount": 10
+                    }
+                },
+                "enableFileUploadNotifications": false,
+                "cloudToDevice": {
+                    "maxDeliveryCount": 10,
+                    "defaultTtlAsIso8601": "PT1H",
+                    "feedback": {
+                        "lockDurationAsIso8601": "PT1M",
+                        "ttlAsIso8601": "PT1H",
+                        "maxDeliveryCount": 10
+                    }
+                },
+                "features": "None"
+            }
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces/queues/authorizationRules",
+            "apiVersion": "[variables('sbVersion')]",
+            "name": "[concat(variables('serviceBus'), '/', variables('serviceBusQueue'), '/', variables('AuthRules_sb_queue'))]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBus'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/queues', variables('serviceBus'), variables('serviceBusQueue'))]"
+            ],
+            "properties": {
+                "rights": [
+                    "Send"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.StreamAnalytics/streamingjobs",
+            "apiVersion": "2016-03-01",
+            "name": "[variables('streamingJob')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "sku": {
+                    "name": "Standard"
+                },
+                "eventsOutOfOrderPolicy": "Adjust",
+                "inputs": [
+                    {
+                        "name": "iotHubInput",
+                        "properties": {
+                            "datasource": {
+                                "properties": {
+                                    "consumerGroupName": "[variables('consumerGroupName')]",
+                                    "iotHubNamespace": "[variables('iotHubName')]",
+                                    "sharedAccessPolicyKey": "[listkeys(resourceId('Microsoft.Devices/IotHubs/IotHubKeys',variables('iotHubName'), 'iothubowner'),'2018-04-01').primaryKey]",
+                                    "sharedAccessPolicyName": "iothubowner",
+                                    "endpoint": "messages/events"
+                                },
+                                "type": "Microsoft.Devices/IotHubs"
+                            },
+                            "serialization": {
+                                "properties": {
+                                    "encoding": "UTF8"
+                                },
+                                "type": "Json"
+                            },
+                            "type": "Stream"
+                        }
+                    },
+                    {
+                        "name": "Devices",
+                        "properties": {
+                            "datasource": {
+                                "properties": {
+                                    "container": "storagekaispe",
+                                    "pathPattern": "Devices.json",
+                                    "storageAccounts": [
+                                        {
+                                            "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]",
+                                            "accountName": "[variables('storageAccountName')]"
+                                        }
+                                    ]
+                                },
+                                "type": "Microsoft.Storage/Blob"
+                            },
+                            "serialization": {
+                                "properties": {
+                                    "encoding": "UTF8"
+                                },
+                                "type": "Json"
+                            },
+                            "type": "Reference"
+                        }
+                    },
+                    {
+                        "name": "Rules",
+                        "properties": {
+                            "datasource": {
+                                "properties": {
+                                    "container": "storagekaispe",
+                                    "pathPattern": "Rules.json",
+                                    "storageAccounts": [
+                                        {
+                                            "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]",
+                                            "accountName": "[variables('storageAccountName')]"
+                                        }
+                                    ]
+                                },
+                                "type": "Microsoft.Storage/Blob"
+                            },
+                            "serialization": {
+                                "properties": {
+                                    "encoding": "UTF8"
+                                },
+                                "type": "Json"
+                            },
+                            "type": "Reference"
+                        }
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "outputBlob",
+                        "properties": {
+                            "datasource": {
+                                "type": "Microsoft.Storage/Blob",
+                                "properties": {
+                                    "storageAccounts": [
+                                        {
+                                            "accountName": "[variables('storageAccountName')]",
+                                            "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                                        }
+                                    ],
+                                    "container": "storagekaispe",
+                                    "pathPattern": "rulesEvaluation.json",
+                                    "dateFormat": "yyyy/MM/dd",
+                                    "timeFormat": "HH"
+                                }
+                            },
+                            "serialization": {
+                                "type": "Json",
+                                "properties": {
+                                    "encoding": "UTF8",
+                                    "format": "LineSeparated"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "outputErrorPolicy": "Stop",
+                "eventsOutOfOrderMaxDelayInSeconds": 0,
+                "eventsLateArrivalMaxDelayInSeconds": 5,
+                "dataLocale": "en-US",
+                "compatibilityLevel": "1.1",
+                "transformation": {
+                    "name": "Transformation",
+                    "properties": {
+                        "streamingUnits": 3,
+                        "query": "With [telemetryandRules] as 
+                                (SELECT T,R,telemetry,Fields,Fields2,D FROM iotHubInput T 
+                                Join Devices D on D.Id=T.IotHub.ConnectionDeviceId 
+                                Join Rules R on R.deviceGroup=D.GroupId 
+                                Cross Apply GetArrayElements(R.RuleSets) as Fields 
+                                Cross Apply GetRecordProperties(Fields.ArrayValue) as Fields2 
+                                Cross Apply GetRecordProperties(T) as telemetry 
+                                Where telemetry.PropertyName=Try_Cast(Fields2.PropertyValue as nvarchar(max)) 
+                                and (fields.arrayvalue.operator !=null  
+                                or (fields.arrayvalue.operator ='>' and try_cast(telemetry.PropertyValue as float)>Fields.ArrayValue.Value) 
+                                or (fields.arrayvalue.operator ='<' and try_cast(telemetry.PropertyValue as float)<Fields.ArrayValue.Value)
+                                or (fields.arrayvalue.operator ='<=' and try_cast(telemetry.PropertyValue as float)<=Fields.ArrayValue.Value)
+                                or (fields.arrayvalue.operator ='>=' and try_cast(telemetry.PropertyValue as float)>=Fields.ArrayValue.Value)
+                                or (fields.arrayvalue.operator ='==' and try_cast(telemetry.PropertyValue as float)=Fields.ArrayValue.Value) ) )
+                                SELECT D.Id,R.Name,T INTO outputBlob FROM [telemetryandRules] Group By T,R,D,tumblingwindow(minute,1)
+                                Having count(T)=R.SetCount"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2015-08-01",
+            "name": "[variables('appServiceName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "appService"
+            },
+            "sku": {
+                "name": "F1"
+            },
+            "properties": {
+                "name": "[variables('appServiceName')]",
+                "numberOfWorkers": 1
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2015-08-01",
+            "name": "[variables('webAppName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('appServiceName'))]"
+            ],
+            "properties": {
+                "name": "[variables('webAppName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServiceName'))]",
+                "siteConfig": {
+                    "connectionStrings": [
+                        {
+                            "name": "AzureStorageStr",
+                            "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2015-05-01-preview').key1)]",
+                            "type": "Custom"
+                        },
+                        {
+                            "name": "AzureSubscriptionStr",
+                            "connectionString": "[concat('HostName=', reference(resourceId('Microsoft.Devices/IoTHubs', variables('iotHubName')), providers('Microsoft.Devices', 'IoTHubs').apiVersions[0]).hostName, ';SharedAccessKeyName=iothubowner;SharedAccessKey=', listKeys(resourceId('Microsoft.Devices/IotHubs', variables('iotHubName')), providers('Microsoft.Devices', 'IoTHubs').apiVersions[0]).value[0].primaryKey)]",
+                            "type": "Custom"
+                        },
+                        {
+                            "name": "AzureServiceBusStr",
+                            "connectionString": "[listKeys(resourceId(concat('Microsoft.ServiceBus/namespaces/AuthorizationRules'),variables('serviceBus'),'RootManageSharedAccessKey'),'2015-08-01').primaryConnectionString]",
+                            "type": "Custom"
+                        },
+                        {
+                            "name": "AzureServiceBusQueue",
+                            "connectionString": "[variables('serviceBusQueue')]",
+                            "type": "Custom"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/extensions",
+            "apiVersion": "2018-02-01",
+            "name": "[concat(variables('webAppName'),'/msdeploy')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites',variables('webAppName'))]"
+            ],
+            "properties": {
+                "addOnPackages": [
+                    {
+                        "packageUri": "https://kspwebstorageaccount.blob.core.windows.net/oct-11/oct-11-phase-2.zip?sp=r&st=2019-10-16T06:13:11Z&se=2020-12-31T14:13:11Z&spr=https&sv=2018-03-28&sig=oBveP0hH0cHbgTo8V6%2Fz9bJx42NiK45vZ6RpMnI428k%3D&sr=b"
+                    }
+                ]
+            }
+        }
+    ],
+   "outputs": {
+      "WebAppUrl": {
+        "type": "string",
+        "value": "[concat('https://',variables('webAppName'),'.azurewebsites.net')]"
+      } 
+}
+}
