@@ -412,7 +412,7 @@
             "properties": {
                 "addOnPackages": [
                     {
-                        "packageUri": "https://kspwebstorageaccount.blob.core.windows.net/oct-18-latest/oct-18-latest.zip?sp=r&st=2019-10-18T14:59:18Z&se=2020-12-30T22:59:18Z&spr=https&sv=2019-02-02&sr=b&sig=P8BJ9cAWApMk8mWQQdN9hM%2BwQ6evYTBYOJg6dxtR3DI%3D"
+                        "packageUri": "https://kspwebstorageaccount.blob.core.windows.net/oct-21-updated/oct-21-updated.zip?sp=r&st=2019-10-21T10:38:55Z&se=2020-12-31T18:38:55Z&spr=https&sv=2019-02-02&sr=b&sig=Twtd0eBFuAntrHu9a1NX5UINM%2F1zgV2zuwmCC1uUuFE%3D"
                     }
                 ]
             }
